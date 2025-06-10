@@ -1,0 +1,109 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyO2Zz0hQqCprUsuiXZaJoEs",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Ishwarya-L/Blocks-world-program/blob/main/Blocks%20world\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "mRqtip5UNPsd",
+        "outputId": "a3a8f8c7-62d0-46fd-9304-0964119366b9"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "New State:\n",
+            "clear(A)\n",
+            "clear(C)\n",
+            "handempty()\n",
+            "on(A,B)\n",
+            "ontable(B)\n",
+            "ontable(C)\n"
+          ]
+        }
+      ],
+      "source": [
+        "# World State represented as a set of facts\n",
+        "initial_state = {\n",
+        "    \"ontable(A)\", \"ontable(B)\", \"ontable(C)\",\n",
+        "    \"clear(A)\", \"clear(B)\", \"clear(C)\",\n",
+        "    \"handempty()\"\n",
+        "}\n",
+        "def is_true(fact, state):\n",
+        "    return fact in state\n",
+        "\n",
+        "def add_and_remove(state, add_list, del_list):\n",
+        "    return (state - set(del_list)) | set(add_list)\n",
+        "actions = {\n",
+        "    \"pickup\": lambda x: {\n",
+        "        \"preconds\": {f\"ontable({x})\", f\"clear({x})\", \"handempty()\"},\n",
+        "        \"add\": {f\"holding({x})\"},\n",
+        "        \"del\": {f\"ontable({x})\", f\"clear({x})\", \"handempty()\"}\n",
+        "    },\n",
+        "    \"putdown\": lambda x: {\n",
+        "        \"preconds\": {f\"holding({x})\"},\n",
+        "        \"add\": {f\"ontable({x})\", f\"clear({x})\", \"handempty()\"},\n",
+        "        \"del\": {f\"holding({x})\"}\n",
+        "    },\n",
+        "    \"stack\": lambda x, y: {\n",
+        "        \"preconds\": {f\"holding({x})\", f\"clear({y})\"},\n",
+        "        \"add\": {f\"on({x},{y})\", f\"clear({x})\", \"handempty()\"},\n",
+        "        \"del\": {f\"holding({x})\", f\"clear({y})\"}\n",
+        "    },\n",
+        "    \"unstack\": lambda x, y: {\n",
+        "        \"preconds\": {f\"on({x},{y})\", f\"clear({x})\", \"handempty()\"},\n",
+        "        \"add\": {f\"holding({x})\", f\"clear({y})\"},\n",
+        "        \"del\": {f\"on({x},{y})\", f\"clear({x})\", \"handempty()\"}\n",
+        "    }\n",
+        "}\n",
+        "def execute_action(state, action_name, *args):\n",
+        "    action = actions[action_name](*args)\n",
+        "    if all(is_true(p, state) for p in action[\"preconds\"]):\n",
+        "        new_state = add_and_remove(state, action[\"add\"], action[\"del\"])\n",
+        "        return new_state\n",
+        "    else:\n",
+        "        raise Exception(f\"Preconditions not met for {action_name}{args}\")\n",
+        "\n",
+        "# Initial State\n",
+        "state = initial_state.copy()\n",
+        "\n",
+        "# Move A onto B: pickup(A) -> stack(A, B)\n",
+        "state = execute_action(state, \"pickup\", \"A\")\n",
+        "state = execute_action(state, \"stack\", \"A\", \"B\")\n",
+        "\n",
+        "print(\"New State:\")\n",
+        "for fact in sorted(state):\n",
+        "    print(fact)\n"
+      ]
+    }
+  ]
+}
